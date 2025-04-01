@@ -62,7 +62,7 @@ public class MqttDataPublisher implements AutoCloseable { // Implement AutoClose
                 LOGGER.info("Already connected.");
                 return;
             }
-            try {
+
                 LOGGER.log(Level.INFO, "Connecting to MQTT broker: {0} with client ID: {1}",
                         new Object[]{config.getBrokerUrl(), config.getClientId()});
                 // Using MemoryPersistence, suitable for most non-critical scenarios
@@ -74,7 +74,7 @@ public class MqttDataPublisher implements AutoCloseable { // Implement AutoClose
                 options.setConnectionTimeout(10); // Connection timeout in seconds
                 options.setKeepAliveInterval(20); // Keep alive interval in seconds
 
-
+            try {
                 mqttClient.connect(options);
                 LOGGER.info("Successfully connected to MQTT broker.");
             } catch (MqttException e) {

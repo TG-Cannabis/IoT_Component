@@ -1,12 +1,15 @@
 package simulation.config;
 
 import io.github.cdimascio.dotenv.Dotenv;
+import lombok.Getter;
+
 import java.util.Objects;
 
 /**
  * Holds configuration parameters for the MQTT publisher.
  * Provides a convenient way to load settings, typically from environment variables.
  */
+@Getter
 public class PublisherConfig {
 
     private final String brokerUrl;
@@ -36,33 +39,6 @@ public class PublisherConfig {
         if (topic.trim().isEmpty()) {
             throw new IllegalArgumentException("Topic cannot be empty");
         }
-    }
-
-    /**
-     * Gets the MQTT broker URL.
-     *
-     * @return The broker URL string.
-     */
-    public String getBrokerUrl() {
-        return brokerUrl;
-    }
-
-    /**
-     * Gets the MQTT client ID.
-     *
-     * @return The client ID string.
-     */
-    public String getClientId() {
-        return clientId;
-    }
-
-    /**
-     * Gets the MQTT topic.
-     *
-     * @return The topic string.
-     */
-    public String getTopic() {
-        return topic;
     }
 
     /**
