@@ -2,6 +2,8 @@ package simulation.generator;
 
 import model.SensorData;
 import model.SensorInformation;
+
+import java.util.Objects;
 import java.util.Random;
 
 /**
@@ -36,7 +38,7 @@ public class SensorDataGenerator {
      * @param random The Random instance to use for generation. Cannot be null.
      */
     public SensorDataGenerator(Random random) {
-        this.random = java.util.Objects.requireNonNull(random, "Random instance cannot be null");
+        this.random = Objects.requireNonNull(random, "Random instance cannot be null");
     }
 
     /**
