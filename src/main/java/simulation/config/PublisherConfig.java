@@ -51,7 +51,7 @@ public class PublisherConfig {
      */
     public static PublisherConfig loadFromEnv() {
         // Consider making the dotenv loading path configurable if needed
-        Dotenv dotenv = Dotenv.configure().directory("src/main/resources").ignoreIfMissing().load();
+        Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
 
         String broker = dotenv.get("MQTT_BROKER");
         String clientId = dotenv.get("MQTT_PUBLISHER_ID");
