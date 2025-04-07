@@ -1,12 +1,12 @@
-package simulation.publisher;
+package com.tgcannabis.iot_component.simulation.publisher;
 
 import com.google.gson.Gson;
 import lombok.Getter;
-import model.SensorData; // Assuming this model class exists
+import com.tgcannabis.iot_component.model.SensorData; // Assuming this model class exists
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence; // Good default
-import simulation.config.PublisherConfig;
-import simulation.generator.SensorDataGenerator;
+import com.tgcannabis.iot_component.simulation.config.PublisherConfig;
+import com.tgcannabis.iot_component.simulation.generator.SensorDataGenerator;
 
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;

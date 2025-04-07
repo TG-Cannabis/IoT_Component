@@ -1,4 +1,4 @@
-package model;
+package com.tgcannabis.iot_component.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

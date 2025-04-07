@@ -1,7 +1,7 @@
-package simulation.generator;
+package com.tgcannabis.iot_component.simulation.generator;
 
-import model.SensorData;
-import model.SensorInformation;
+import com.tgcannabis.iot_component.model.SensorData;
+import com.tgcannabis.iot_component.model.SensorInformation;
 
 import java.util.Objects;
 import java.util.Random;

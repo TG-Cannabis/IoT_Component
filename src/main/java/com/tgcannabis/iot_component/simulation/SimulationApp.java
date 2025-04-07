@@ -1,8 +1,8 @@
-package simulation;
+package com.tgcannabis.iot_component.simulation;
 
-import simulation.config.PublisherConfig;
-import simulation.generator.SensorDataGenerator;
-import simulation.publisher.MqttDataPublisher;
+import com.tgcannabis.iot_component.simulation.config.PublisherConfig;
+import com.tgcannabis.iot_component.simulation.generator.SensorDataGenerator;
+import com.tgcannabis.iot_component.simulation.publisher.MqttDataPublisher;
 
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;

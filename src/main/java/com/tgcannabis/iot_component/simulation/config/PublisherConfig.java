@@ -1,4 +1,4 @@
-package simulation.config;
+package com.tgcannabis.iot_component.simulation.config;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import lombok.Getter;
@@ -22,7 +22,7 @@ public class PublisherConfig {
      * @param brokerUrl The URL of the MQTT broker (e.g., "tcp://localhost:1883"). Cannot be null or empty.
      * @param clientId  The client ID to use when connecting to the broker. Cannot be null or empty.
      * @param topic     The MQTT topic to publish messages to. Cannot be null or empty.
-     * @throws NullPointerException if any argument is null.
+     * @throws NullPointerException     if any argument is null.
      * @throws IllegalArgumentException if any argument is empty.
      */
     public PublisherConfig(String brokerUrl, String clientId, String topic) {
@@ -42,32 +42,40 @@ public class PublisherConfig {
     }
 
     /**
-     * Loads configuration from environment variables using Dotenv.
+     * Loads configuration from environment variables or .env file (as fallback).
      * Expects "MQTT_BROKER", "MQTT_PUBLISHER_ID", and "MQTT_TOPIC" variables.
-     * Assumes a .env file exists in "src/main/resources".
      *
      * @return A PublisherConfig instance loaded from environment variables.
      * @throws IllegalStateException if required environment variables are missing or empty.
      */
     public static PublisherConfig loadFromEnv() {
-        // Consider making the dotenv loading path configurable if needed
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
 
-        String broker = dotenv.get("MQTT_BROKER");
-        String clientId = dotenv.get("MQTT_PUBLISHER_ID");
-        String topic = dotenv.get("MQTT_TOPIC");
-
-        if (broker == null || broker.trim().isEmpty()) {
-            throw new IllegalStateException("Missing or empty environment variable: MQTT_BROKER");
-        }
-        if (clientId == null || clientId.trim().isEmpty()) {
-            throw new IllegalStateException("Missing or empty environment variable: MQTT_PUBLISHER_ID");
-        }
-        if (topic == null || topic.trim().isEmpty()) {
-            throw new IllegalStateException("Missing or empty environment variable: MQTT_TOPIC");
-        }
+        // Use the shared helper methods to get values
+        String broker = getEnvOrThrow(dotenv, "MQTT_BROKER", "Missing or empty environment variable: MQTT_BROKER");
+        String clientId = getEnvOrThrow(dotenv, "MQTT_PUBLISHER_ID", "Missing or empty environment variable: MQTT_PUBLISHER_ID");
+        String topic = getEnvOrThrow(dotenv, "MQTT_TOPIC", "Missing or empty environment variable: MQTT_TOPIC");
 
         return new PublisherConfig(broker, clientId, topic);
+    }
+
+    /**
+     * Gets a value from System env variables (Or Dotenv file as fallback), throwing an exception if not found.
+     *
+     * @param dotenv       Dotenv instance
+     * @param varName      Environment variable name
+     * @param errorMessage Error message if not found
+     * @return The value found
+     * @throws IllegalStateException if the variable is missing or empty
+     */
+    private static String getEnvOrThrow(Dotenv dotenv, String varName, String errorMessage) {
+        String value = System.getenv(varName);
+        if (value != null) return value;
+
+        value = dotenv.get(varName);
+        if (value != null) return value;
+
+        throw new IllegalArgumentException(errorMessage);
     }
 
     @Override
