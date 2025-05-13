@@ -1,6 +1,7 @@
 package com.tgcannabis.iot_component.simulation;
 
 import com.tgcannabis.iot_component.simulation.config.PublisherConfig;
+import com.tgcannabis.iot_component.simulation.config.SimulationConfig;
 import com.tgcannabis.iot_component.simulation.generator.SensorDataGenerator;
 import com.tgcannabis.iot_component.simulation.publisher.MqttDataPublisher;
 
@@ -21,23 +22,23 @@ public class SimulationApp {
         MqttDataPublisher publisher = null;
         try {
             // 1. Load Configuration
-            PublisherConfig config = PublisherConfig.loadFromEnv();
-            LOGGER.log(Level.INFO, "Configuration loaded: {0}", config);
+            PublisherConfig publisherConfig = PublisherConfig.loadFromEnv();
+            LOGGER.log(Level.INFO, "Publisher configuration loaded: {0}", publisherConfig);
+            SimulationConfig simulationConfig = SimulationConfig.loadFromEnv();
+            LOGGER.log(Level.INFO, "Simulation configuration loaded: {0}", simulationConfig);
 
             // 2. Create Dependencies
-            SensorDataGenerator generator = new SensorDataGenerator();
+            SensorDataGenerator generator = new SensorDataGenerator(simulationConfig);
 
             // 3. Create Publisher instance (using try-with-resources for AutoCloseable)
-            publisher = new MqttDataPublisher(config, generator);
+            publisher = new MqttDataPublisher(publisherConfig, generator);
 
             // 4. Add Shutdown Hook for graceful termination
             // This ensures disconnection even if the application is stopped externally (Ctrl+C)
             MqttDataPublisher finalPublisher = publisher; // Need effectively final variable for lambda
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 LOGGER.info("Shutdown hook triggered. Cleaning up...");
-                if (finalPublisher != null) {
-                    finalPublisher.close(); // Calls stopPublishing() and disconnect()
-                }
+                finalPublisher.close(); // Calls stopPublishing() and disconnect()
                 LOGGER.info("Cleanup finished.");
             }));
 
@@ -55,7 +56,7 @@ public class SimulationApp {
         } catch (Exception e) { // Catch broader exceptions during setup or connection
             LOGGER.log(Level.SEVERE, "Simulation failed to start or encountered a critical error.", e);
             // Ensure cleanup if publisher was partially initialized
-            if(publisher != null) {
+            if (publisher != null) {
                 publisher.close();
             }
             System.exit(1); // Exit with error code

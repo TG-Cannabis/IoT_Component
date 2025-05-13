@@ -2,43 +2,30 @@ package com.tgcannabis.iot_component.simulation.generator;
 
 import com.tgcannabis.iot_component.model.SensorData;
 import com.tgcannabis.iot_component.model.SensorInformation;
+import com.tgcannabis.iot_component.simulation.config.SimulationConfig;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 
 /**
  * Generates simulated SensorData objects.
- * Produces random temperature or humidity readings from predefined locations and sensor IDs.
+ * Produces random readings using given parameters for sensor types, locations and value ranges from SimulationConfig
  */
 public class SensorDataGenerator {
-
-    private static final String[] SENSOR_TYPES = {"temperature", "humidity"};
-    private static final String[] LOCATIONS = {"Office", "Warehouse", "Lab"};
     private static final int MAX_SENSOR_ID = 3; // Generates sensor_1, sensor_2, sensor_3
 
-    // Sensor value ranges
-    private static final double TEMP_BASE = 20.0;
-    private static final double TEMP_RANGE = 10.0;
-    private static final double HUMIDITY_BASE = 40.0;
-    private static final double HUMIDITY_RANGE = 30.0;
-
     private final Random random;
+    private final SimulationConfig config;
 
     /**
-     * Constructs a SensorDataGenerator using a default Random instance.
-     */
-    public SensorDataGenerator() {
-        this.random = new Random();
-    }
-
-    /**
-     * Constructs a SensorDataGenerator using the provided Random instance.
-     * Useful for testing or controlling randomness.
+     * Constructs a SensorDataGenerator using simulation parameters loaded from env.
      *
-     * @param random The Random instance to use for generation. Cannot be null.
+     * @param config instance of SimulationConfig with simulation parameters.
      */
-    public SensorDataGenerator(Random random) {
-        this.random = Objects.requireNonNull(random, "Random instance cannot be null");
+    public SensorDataGenerator(SimulationConfig config) {
+        this.random = new Random();
+        this.config = config;
     }
 
     /**
@@ -48,27 +35,40 @@ public class SensorDataGenerator {
      * @return A new SensorData object with simulated data and current timestamp.
      */
     public SensorData generate() {
-        // Create sensor information
-        SensorInformation sensorInfo = new SensorInformation();
-        String sensorType = getRandomElement(SENSOR_TYPES);
-        String location = getRandomElement(LOCATIONS);
+        // Generate random elements
+        String sensorType = getRandomElement(config.getSensorTypes());
+        String location = getRandomElement(config.getLocations());
         String sensorId = "sensor_" + (random.nextInt(MAX_SENSOR_ID) + 1);
 
-        sensorInfo.setSensorType(sensorType);
-        sensorInfo.setLocation(location);
-        sensorInfo.setId(sensorId); // Assuming SensorInformation has setId method
+        // Decide whether to generate an out-of-range value
+        boolean generateInvalid = random.nextDouble() < config.getFailProbability();
 
-        // Generate sensor value based on type
+        SimulationConfig.ValueRange range = config.getValueRanges().get(sensorType);
         double value;
-        if ("temperature".equals(sensorType)) {
-            value = TEMP_BASE + (random.nextDouble() * TEMP_RANGE); // Temperature
-        } else { // humidity
-            value = HUMIDITY_BASE + (random.nextDouble() * HUMIDITY_RANGE); // Humidity
+
+        if (generateInvalid) {
+            // Generate an out-of-range value (either below min or above max)
+            boolean below = random.nextBoolean();
+            if (below) {
+                value = range.getMin() - (random.nextDouble() * 10); // 0–10 below
+            } else {
+                value = range.getMax() + (random.nextDouble() * 10); // 0–10 above
+            }
+        } else {
+            // Generate normal in-range value
+            value = range.getMin() + (random.nextDouble() * (range.getMax() - range.getMin()));
         }
 
-        // Create SensorData object
+        // Sensor identification data
+        SensorInformation sensorInfo = new SensorInformation();
+        sensorInfo.setSensorType(sensorType);
+        sensorInfo.setLocation(location);
+        sensorInfo.setId(sensorId);
+
+
+        // Sensor measurement dat
         SensorData data = new SensorData();
-        data.setSensorName(sensorInfo); // Assuming SensorData has setSensorName(SensorInformation)
+        data.setSensorName(sensorInfo);
         data.setValue(value);
         data.setTimestamp(System.currentTimeMillis());
 
@@ -76,14 +76,12 @@ public class SensorDataGenerator {
     }
 
     /**
-     * Helper method to get a random element from a String array.
-     * @param array The array to select from.
-     * @return A randomly selected element from the array.
+     * Helper method to get a random element from a list of any type.
+     *
+     * @param list The list to select from.
+     * @return A randomly selected element from the list.
      */
-    private String getRandomElement(String[] array) {
-        if (array == null || array.length == 0) {
-            return null; // Or throw an exception
-        }
-        return array[random.nextInt(array.length)];
+    private <T> T getRandomElement(List<T> list) {
+        return list.get(random.nextInt(list.size()));
     }
 }
