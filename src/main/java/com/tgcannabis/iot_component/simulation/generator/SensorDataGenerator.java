@@ -1,11 +1,9 @@
 package com.tgcannabis.iot_component.simulation.generator;
 
 import com.tgcannabis.iot_component.model.SensorData;
-import com.tgcannabis.iot_component.model.SensorInformation;
 import com.tgcannabis.iot_component.simulation.config.SimulationConfig;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Random;
 
 /**
@@ -57,18 +55,13 @@ public class SensorDataGenerator {
         } else {
             // Generate normal in-range value
             value = range.getMin() + (random.nextDouble() * (range.getMax() - range.getMin()));
-        }
-
-        // Sensor identification data
-        SensorInformation sensorInfo = new SensorInformation();
-        sensorInfo.setSensorType(sensorType);
-        sensorInfo.setLocation(location);
-        sensorInfo.setId(sensorId);
-
-
+        }        
+        
         // Sensor measurement dat
         SensorData data = new SensorData();
-        data.setSensorName(sensorInfo);
+        data.setSensorType(sensorType);
+        data.setLocation(location);
+        data.setSensorId(sensorId);
         data.setValue(value);
         data.setTimestamp(System.currentTimeMillis());
 

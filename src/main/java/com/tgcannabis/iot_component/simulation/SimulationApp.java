@@ -16,7 +16,7 @@ import java.util.logging.Logger;
 public class SimulationApp {
 
     private static final Logger LOGGER = Logger.getLogger(SimulationApp.class.getName());
-    private static final long PUBLISH_INTERVAL_SECONDS = 5; // Publish interval
+    private static final long PUBLISH_INTERVAL_SECONDS = 30; // Publish interval
 
     public static void main(String[] args) {
         MqttDataPublisher publisher = null;
