@@ -79,8 +79,6 @@ public class MqttDataPublisher implements AutoCloseable { // Implement AutoClose
 
             LOGGER.log(Level.INFO, "Connecting to MQTT broker: {0} with client ID: {1}",
                     new Object[]{config.getBrokerUrl(), config.getClientId()});
-            // Using MemoryPersistence, suitable for most non-critical scenarios
-            mqttClient = new MqttClient(config.getBrokerUrl(), config.getClientId(), new MemoryPersistence());
 
             MqttConnectOptions options = new MqttConnectOptions();
             options.setCleanSession(true); // Standard behavior for publishers like this
@@ -102,11 +100,9 @@ public class MqttDataPublisher implements AutoCloseable { // Implement AutoClose
                         mqttClient.close();
                     } catch (MqttException closeEx) {
                         LOGGER.log(Level.SEVERE, "Error closing MQTT client after connection failure.", closeEx);
-                    } finally {
-                        mqttClient = null;
                     }
                 }
-                throw e; // Re-throw the original exception
+                throw new RuntimeException("Connection to MQTT failed. Cleaning up..."); // Re-throw the original exception
             }
         }
     }

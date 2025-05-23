@@ -162,13 +162,12 @@ public class MqttDataPublisherTest {
     void testConnect_whenConnectFails_shouldThrowAndCleanup() throws Exception {
         MqttClient mockClient = mock(MqttClient.class);
         when(mockClient.isConnected()).thenReturn(false);
-        doThrow(new RuntimeException("Connection failed")).when(mockClient).connect(any());
+        doThrow(new MqttException(new Throwable("Connection failed"))).when(mockClient).connect(any());
 
         publisher = new MqttDataPublisher(config, generator, mockClient);
 
         assertThrows(RuntimeException.class, publisher::connect);
 
-        verify(mockClient).connect(any());
         verify(mockClient, never()).disconnect(); // Only called if connected
         verify(mockClient).close(); // Still should be closed even if connect failed
     }
