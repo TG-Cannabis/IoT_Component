@@ -1,4 +1,4 @@
-package com.tgcannabis.iot_component.simulation.config;
+package com.tgcannabis.config;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import lombok.Getter;
@@ -81,7 +81,7 @@ public class SimulationConfig {
      * @param locations       List of available locations to tag data. e.g. Greenhouse-1
      * @param failProbability probability of generating a value out of given range
      */
-    private SimulationConfig(List<String> sensorTypes, Map<String, ValueRange> valueRanges, List<String> locations, double failProbability) {
+    public SimulationConfig(List<String> sensorTypes, Map<String, ValueRange> valueRanges, List<String> locations, double failProbability) {
         this.sensorTypes = Objects.requireNonNull(sensorTypes, "Error loading available sensor types");
         this.valueRanges = Objects.requireNonNull(valueRanges, "Error loading sensors value ranges");
         this.locations = Objects.requireNonNull(locations, "Error loading available locations");
