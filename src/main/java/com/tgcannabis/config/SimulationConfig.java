@@ -30,8 +30,8 @@ public class SimulationConfig {
     /**
      * Default values in case sensor types or locations are not given
      */
-    private static final String DEFAULT_SENSORS = "temperature,humidity,co2";
-    private static final String DEFAULT_LOCATIONS = "Cundinamarca,Antioquia,Valle del Cauca";
+    static final String DEFAULT_SENSORS = "temperature,humidity,co2";
+    static final String DEFAULT_LOCATIONS = "Cundinamarca,Antioquia,Valle del Cauca";
 
     private final List<String> sensorTypes;
     private final Map<String, ValueRange> valueRanges;
