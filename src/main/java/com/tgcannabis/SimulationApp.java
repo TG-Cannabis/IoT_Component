@@ -4,6 +4,7 @@ import com.tgcannabis.config.PublisherConfig;
 import com.tgcannabis.config.SimulationConfig;
 import com.tgcannabis.generator.SensorDataGenerator;
 import com.tgcannabis.publisher.MqttDataPublisher;
+import org.eclipse.paho.client.mqttv3.MqttClient;
 
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -18,20 +19,32 @@ public class SimulationApp {
     private static final Logger LOGGER = Logger.getLogger(SimulationApp.class.getName());
     private static final long PUBLISH_INTERVAL_SECONDS = 30; // Publish interval
 
-    public static void main(String[] args) {
-        MqttDataPublisher publisher = null;
+    private final PublisherConfig publisherConfig;
+    private final SimulationConfig simulationConfig;
+    private final MqttDataPublisher publisher;
+    private final SensorDataGenerator generator;
+
+    public SimulationApp() {
+        this.publisherConfig = PublisherConfig.loadFromEnv();
+        this.simulationConfig = SimulationConfig.loadFromEnv();
+        generator = new SensorDataGenerator(simulationConfig);
+        publisher = new MqttDataPublisher(publisherConfig, generator);
+    }
+
+    public SimulationApp(PublisherConfig publisherConfig, SimulationConfig simulationConfig, SensorDataGenerator generator, MqttDataPublisher publisher) {
+        this.publisherConfig = publisherConfig;
+        this.simulationConfig = simulationConfig;
+        this.generator = generator;
+        this.publisher = publisher;
+    }
+
+    void start() {
         try {
             // 1. Load Configuration
             PublisherConfig publisherConfig = PublisherConfig.loadFromEnv();
             LOGGER.log(Level.INFO, "Publisher configuration loaded: {0}", publisherConfig);
             SimulationConfig simulationConfig = SimulationConfig.loadFromEnv();
             LOGGER.log(Level.INFO, "Simulation configuration loaded: {0}", simulationConfig);
-
-            // 2. Create Dependencies
-            SensorDataGenerator generator = new SensorDataGenerator(simulationConfig);
-
-            // 3. Create Publisher instance (using try-with-resources for AutoCloseable)
-            publisher = new MqttDataPublisher(publisherConfig, generator);
 
             // 4. Add Shutdown Hook for graceful termination
             // This ensures disconnection even if the application is stopped externally (Ctrl+C)
@@ -64,5 +77,10 @@ public class SimulationApp {
         // Note: If startPublishing completed normally (e.g., was stopped internally),
         // the application would exit here. The shutdown hook still runs on normal exit too.
         LOGGER.info("Simulation main thread finished.");
+    }
+
+    public static void main(String[] args) {
+        SimulationApp app = new SimulationApp();
+        app.start();
     }
 }
