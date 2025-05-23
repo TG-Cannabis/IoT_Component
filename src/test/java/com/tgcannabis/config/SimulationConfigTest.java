@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.when;
 
-public class SimulationConfigTest {
+class SimulationConfigTest {
     private MockedStatic<Dotenv> dotenvStatic;
 
     @BeforeEach
