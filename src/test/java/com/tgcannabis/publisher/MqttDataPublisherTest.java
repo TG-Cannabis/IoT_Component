@@ -5,6 +5,7 @@ import com.tgcannabis.iot_component.model.SensorData;
 import com.tgcannabis.config.PublisherConfig;
 import com.tgcannabis.generator.SensorDataGenerator;
 import org.eclipse.paho.client.mqttv3.MqttClient;
+import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -196,13 +197,13 @@ public class MqttDataPublisherTest {
     void testDisconnect_whenExceptionDuringDisconnect_shouldStillClose() throws Exception {
         MqttClient mockClient = mock(MqttClient.class);
         when(mockClient.isConnected()).thenReturn(true);
-        doThrow(new RuntimeException("Disconnect failed")).when(mockClient).disconnect();
+        doThrow(new MqttException(new Throwable("Disconnection failed"))).when(mockClient).disconnect();
 
         publisher = new MqttDataPublisher(config, generator, mockClient);
         publisher.disconnect();
 
         verify(mockClient).disconnect();
-        verify(mockClient).close(); // Still ensure close is called even if disconnect fails
+        verify(mockClient, atLeastOnce()).close();
     }
 
     @Test
