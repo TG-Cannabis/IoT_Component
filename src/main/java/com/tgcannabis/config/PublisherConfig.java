@@ -1,4 +1,4 @@
-package com.tgcannabis.iot_component.simulation.config;
+package com.tgcannabis.config;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import lombok.Getter;

@@ -1,12 +1,12 @@
-package com.tgcannabis.iot_component.simulation.publisher;
+package com.tgcannabis.publisher;
 
 import com.google.gson.Gson;
 import lombok.Getter;
 import com.tgcannabis.iot_component.model.SensorData; // Assuming this model class exists
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence; // Good default
-import com.tgcannabis.iot_component.simulation.config.PublisherConfig;
-import com.tgcannabis.iot_component.simulation.generator.SensorDataGenerator;
+import com.tgcannabis.config.PublisherConfig;
+import com.tgcannabis.generator.SensorDataGenerator;
 
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -30,7 +30,7 @@ public class MqttDataPublisher implements AutoCloseable { // Implement AutoClose
 
     /**
      * -- GETTER --
-     *  Checks if the publisher loop is currently running.
+     * Checks if the publisher loop is currently running.
      *
      * @return true if the publishing loop is active, false otherwise.
      */
@@ -51,6 +51,20 @@ public class MqttDataPublisher implements AutoCloseable { // Implement AutoClose
     }
 
     /**
+     * Constructs an MqttDataPublished with an already existing or mocked mqtt client
+     *
+     * @param config        The publisher configuration. Cannot be null.
+     * @param dataGenerator The generator for sensor data. Cannot be null.
+     * @param mqttClient    The instance of mqtt client. Useful for mocking in test environments
+     */
+    public MqttDataPublisher(PublisherConfig config, SensorDataGenerator dataGenerator, MqttClient mqttClient) {
+        this.config = config;
+        this.dataGenerator = dataGenerator;
+        this.mqttClient = mqttClient;
+        this.gson = new Gson();
+    }
+
+    /**
      * Connects to the MQTT broker specified in the configuration.
      * Uses default MqttConnectOptions (clean session true).
      *
@@ -63,16 +77,16 @@ public class MqttDataPublisher implements AutoCloseable { // Implement AutoClose
                 return;
             }
 
-                LOGGER.log(Level.INFO, "Connecting to MQTT broker: {0} with client ID: {1}",
-                        new Object[]{config.getBrokerUrl(), config.getClientId()});
-                // Using MemoryPersistence, suitable for most non-critical scenarios
-                mqttClient = new MqttClient(config.getBrokerUrl(), config.getClientId(), new MemoryPersistence());
+            LOGGER.log(Level.INFO, "Connecting to MQTT broker: {0} with client ID: {1}",
+                    new Object[]{config.getBrokerUrl(), config.getClientId()});
+            // Using MemoryPersistence, suitable for most non-critical scenarios
+            mqttClient = new MqttClient(config.getBrokerUrl(), config.getClientId(), new MemoryPersistence());
 
-                MqttConnectOptions options = new MqttConnectOptions();
-                options.setCleanSession(true); // Standard behavior for publishers like this
-                options.setAutomaticReconnect(true); // Enable automatic reconnect
-                options.setConnectionTimeout(10); // Connection timeout in seconds
-                options.setKeepAliveInterval(20); // Keep alive interval in seconds
+            MqttConnectOptions options = new MqttConnectOptions();
+            options.setCleanSession(true); // Standard behavior for publishers like this
+            options.setAutomaticReconnect(true); // Enable automatic reconnect
+            options.setConnectionTimeout(10); // Connection timeout in seconds
+            options.setKeepAliveInterval(20); // Keep alive interval in seconds
 
             try {
                 mqttClient.connect(options);
@@ -156,9 +170,9 @@ public class MqttDataPublisher implements AutoCloseable { // Implement AutoClose
      * Publishes a single SensorData object to the configured MQTT topic.
      *
      * @param data The SensorData to publish. Cannot be null.
-     * @throws MqttException if publishing fails.
+     * @throws MqttException         if publishing fails.
      * @throws IllegalStateException if the client is not connected.
-     * @throws NullPointerException if data is null.
+     * @throws NullPointerException  if data is null.
      */
     public void publishData(SensorData data) throws MqttException {
         Objects.requireNonNull(data, "SensorData cannot be null");
@@ -226,10 +240,11 @@ public class MqttDataPublisher implements AutoCloseable { // Implement AutoClose
 
     /**
      * Checks if the MQTT client is currently connected to the broker.
+     *
      * @return true if connected, false otherwise.
      */
     public boolean isConnected() {
-        synchronized(lock) {
+        synchronized (lock) {
             return mqttClient != null && mqttClient.isConnected();
         }
     }
