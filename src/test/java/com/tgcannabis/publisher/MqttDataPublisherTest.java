@@ -12,12 +12,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-public class MqttDataPublisherTest {
+class MqttDataPublisherTest {
     private PublisherConfig config;
     private SensorDataGenerator generator;
     private MqttDataPublisher publisher;
@@ -79,7 +79,6 @@ public class MqttDataPublisherTest {
 
     @Test
     void testPublishData_whenDataIsNull_shouldThrowNullPointerException() {
-        MqttClient mockClient = mock(MqttClient.class);
         when(mockClient.isConnected()).thenReturn(true);
 
         publisher = new MqttDataPublisher(config, generator, mockClient);
@@ -88,16 +87,20 @@ public class MqttDataPublisherTest {
 
     @Test
     void testPublishData_whenNotConnected_shouldThrowIllegalStateException() {
-        MqttClient mockClient = mock(MqttClient.class);
         when(mockClient.isConnected()).thenReturn(false); // Simulate disconnected
 
         publisher = new MqttDataPublisher(config, generator, mockClient);
-        assertThrows(IllegalStateException.class, () -> publisher.publishData(new SensorData()));
+
+        try {
+            publisher.publishData(new SensorData());
+            fail("Expected IllegalStateException to be thrown");
+        } catch (IllegalStateException | MqttException ex) {
+            assertEquals(IllegalStateException.class, ex.getClass());
+        }
     }
 
     @Test
     void testConnect_whenAlreadyConnected_shouldNotReconnect() throws Exception {
-        MqttClient mockClient = mock(MqttClient.class);
         when(mockClient.isConnected()).thenReturn(true);
 
         publisher = new MqttDataPublisher(config, generator, mockClient);
@@ -115,7 +118,6 @@ public class MqttDataPublisherTest {
 
     @Test
     void testDisconnect_whenConnected_shouldDisconnectAndClose() throws Exception {
-        MqttClient mockClient = mock(MqttClient.class);
         when(mockClient.isConnected()).thenReturn(true);
 
         publisher = new MqttDataPublisher(config, generator, mockClient);
@@ -127,7 +129,6 @@ public class MqttDataPublisherTest {
 
     @Test
     void testDisconnect_whenNotConnected_shouldStillClose() throws Exception {
-        MqttClient mockClient = mock(MqttClient.class);
         when(mockClient.isConnected()).thenReturn(false);
 
         publisher = new MqttDataPublisher(config, generator, mockClient);
@@ -141,9 +142,15 @@ public class MqttDataPublisherTest {
     void testStartPublishing_shouldPublishAtInterval() throws Exception {
         SensorData mockData = new SensorData();
         when(generator.generate()).thenReturn(mockData);
-
-        MqttClient mockClient = mock(MqttClient.class);
         when(mockClient.isConnected()).thenReturn(true);
+
+        CountDownLatch latch = new CountDownLatch(2); // Wait for at least 2 publishes
+
+        // Mock publish to count down the latch each time it's called
+        doAnswer(invocation -> {
+            latch.countDown();
+            return null;
+        }).when(mockClient).publish(eq(config.getTopic()), any(MqttMessage.class));
 
         publisher = new MqttDataPublisher(config, generator, mockClient);
         publisher.connect();
@@ -151,22 +158,23 @@ public class MqttDataPublisherTest {
         Thread thread = new Thread(() -> publisher.startPublishing(100, TimeUnit.MILLISECONDS));
         thread.start();
 
-        Thread.sleep(300);
+        // Wait until at least 2 publish calls are observed or timeout
+        boolean published = latch.await(1, TimeUnit.SECONDS);
         publisher.stopPublishing();
         thread.join();
 
-        verify(mockClient, atLeastOnce()).publish(eq(config.getTopic()), any(MqttMessage.class));
+        assertTrue(published, "Expected at least 2 publish calls within the timeout");
+        verify(mockClient, atLeast(2)).publish(eq(config.getTopic()), any(MqttMessage.class));
     }
 
     @Test
     void testConnect_whenConnectFails_shouldThrowAndCleanup() throws Exception {
-        MqttClient mockClient = mock(MqttClient.class);
         when(mockClient.isConnected()).thenReturn(false);
         doThrow(new MqttException(new Throwable("Connection failed"))).when(mockClient).connect(any());
 
         publisher = new MqttDataPublisher(config, generator, mockClient);
 
-        assertThrows(RuntimeException.class, publisher::connect);
+        assertThrows(MqttException.class, publisher::connect);
 
         verify(mockClient, never()).disconnect(); // Only called if connected
         verify(mockClient).close(); // Still should be closed even if connect failed
@@ -181,7 +189,6 @@ public class MqttDataPublisherTest {
         data.setTimestamp(System.currentTimeMillis());
         data.setValue(42.0);
 
-        MqttClient mockClient = mock(MqttClient.class);
         when(mockClient.isConnected()).thenReturn(true);
         doThrow(new RuntimeException("Publish failed")).when(mockClient).publish(anyString(), any(MqttMessage.class));
 
@@ -194,7 +201,6 @@ public class MqttDataPublisherTest {
 
     @Test
     void testDisconnect_whenExceptionDuringDisconnect_shouldStillClose() throws Exception {
-        MqttClient mockClient = mock(MqttClient.class);
         when(mockClient.isConnected()).thenReturn(true);
         doThrow(new MqttException(new Throwable("Disconnection failed"))).when(mockClient).disconnect();
 
@@ -209,18 +215,23 @@ public class MqttDataPublisherTest {
     void testStartPublishing_whenInterrupted_shouldStopGracefully() throws Exception {
         SensorData mockData = new SensorData();
         when(generator.generate()).thenReturn(mockData);
-
-        MqttClient mockClient = mock(MqttClient.class);
         when(mockClient.isConnected()).thenReturn(true);
 
         publisher = new MqttDataPublisher(config, generator, mockClient);
         publisher.connect();
 
-        Thread thread = new Thread(() -> publisher.startPublishing(5, TimeUnit.SECONDS));
+        CountDownLatch startedLatch = new CountDownLatch(1);
+
+        Thread thread = new Thread(() -> {
+            startedLatch.countDown(); // Signal that thread has started
+            publisher.startPublishing(5, TimeUnit.SECONDS);
+        });
         thread.start();
 
-        Thread.sleep(200); // Give it time to enter sleep
-        thread.interrupt(); // Simulate interruption
+        // Wait until the publishing thread has started (entered startPublishing)
+        assertTrue(startedLatch.await(1, TimeUnit.SECONDS), "Publishing thread did not start in time");
+
+        thread.interrupt(); // Interrupt the thread
         thread.join(2000);
 
         assertFalse(publisher.isRunning());
@@ -231,16 +242,27 @@ public class MqttDataPublisherTest {
         SensorDataGenerator faultyGenerator = mock(SensorDataGenerator.class);
         when(faultyGenerator.generate()).thenThrow(new RuntimeException("Generator failed"));
 
-        MqttClient mockClient = mock(MqttClient.class);
         when(mockClient.isConnected()).thenReturn(true);
 
         publisher = new MqttDataPublisher(config, faultyGenerator, mockClient);
         publisher.connect();
 
-        Thread thread = new Thread(() -> publisher.startPublishing(100, TimeUnit.MILLISECONDS));
-        thread.start();
+        ExecutorService executor = Executors.newSingleThreadExecutor();
 
-        thread.join(1000);
-        assertFalse(publisher.isRunning()); // Should stop due to generator exception
+        Future<?> future = executor.submit(() -> publisher.startPublishing(100, TimeUnit.MILLISECONDS));
+
+        // Wait up to 1 second for the task to complete (publisher should stop due to exception)
+        try {
+            future.get(1, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            // Timeout means it didn't stop in time - fail the test
+            fail("Publisher did not stop within timeout");
+        } finally {
+            executor.shutdownNow();
+        }
+
+        assertFalse(publisher.isRunning(), "Publisher should stop due to generator exception");
     }
+
+
 }

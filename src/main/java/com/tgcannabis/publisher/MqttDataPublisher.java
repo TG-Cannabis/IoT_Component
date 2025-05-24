@@ -22,7 +22,10 @@ public class MqttDataPublisher implements AutoCloseable { // Implement AutoClose
     // Using Java Util Logging for better logging control
     private static final Logger LOGGER = Logger.getLogger(MqttDataPublisher.class.getName());
 
+    @Getter
     private final PublisherConfig config;
+
+    @Getter
     private final SensorDataGenerator dataGenerator;
     private final Gson gson;
     private MqttClient mqttClient;
@@ -102,7 +105,7 @@ public class MqttDataPublisher implements AutoCloseable { // Implement AutoClose
                         LOGGER.log(Level.SEVERE, "Error closing MQTT client after connection failure.", closeEx);
                     }
                 }
-                throw new RuntimeException("Connection to MQTT failed. Cleaning up..."); // Re-throw the original exception
+                throw new MqttException(new Throwable("Connection to MQTT failed. Cleaning up..."));
             }
         }
     }

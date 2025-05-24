@@ -2,6 +2,7 @@ package com.tgcannabis.generator;
 
 import com.tgcannabis.iot_component.model.SensorData;
 import com.tgcannabis.config.SimulationConfig;
+import lombok.Getter;
 
 import java.util.List;
 import java.util.Random;
@@ -14,6 +15,8 @@ public class SensorDataGenerator {
     private static final int MAX_SENSOR_ID = 3; // Generates sensor_1, sensor_2, sensor_3
 
     private final Random random;
+
+    @Getter
     private final SimulationConfig config;
 
     /**

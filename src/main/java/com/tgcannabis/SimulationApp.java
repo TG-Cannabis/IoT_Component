@@ -4,7 +4,6 @@ import com.tgcannabis.config.PublisherConfig;
 import com.tgcannabis.config.SimulationConfig;
 import com.tgcannabis.generator.SensorDataGenerator;
 import com.tgcannabis.publisher.MqttDataPublisher;
-import org.eclipse.paho.client.mqttv3.MqttClient;
 
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -41,9 +40,7 @@ public class SimulationApp {
     void start() {
         try {
             // 1. Load Configuration
-            PublisherConfig publisherConfig = PublisherConfig.loadFromEnv();
             LOGGER.log(Level.INFO, "Publisher configuration loaded: {0}", publisherConfig);
-            SimulationConfig simulationConfig = SimulationConfig.loadFromEnv();
             LOGGER.log(Level.INFO, "Simulation configuration loaded: {0}", simulationConfig);
 
             // 4. Add Shutdown Hook for graceful termination

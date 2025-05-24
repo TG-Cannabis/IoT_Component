@@ -253,22 +253,25 @@ class SimulationConfigTest {
 
     @Test
     void constructorShouldThrowIfSensorTypesIsNull() {
-        NullPointerException ex = assertThrows(NullPointerException.class,
-                () -> new SimulationConfig(null, Collections.emptyMap(), Collections.emptyList(), 0.1));
+        NullPointerException ex = assertThrows(NullPointerException.class, () ->
+                new SimulationConfig(null, Collections.emptyMap(), Collections.emptyList(), 0.1)
+        );
         assertEquals("Error loading available sensor types", ex.getMessage());
     }
 
     @Test
     void constructorShouldThrowIfValueRangesIsNull() {
-        NullPointerException ex = assertThrows(NullPointerException.class,
-                () -> new SimulationConfig(Collections.emptyList(), null, Collections.emptyList(), 0.1));
+        NullPointerException ex = assertThrows(NullPointerException.class, () ->
+                new SimulationConfig(Collections.emptyList(), null, Collections.emptyList(), 0.1)
+        );
         assertEquals("Error loading sensors value ranges", ex.getMessage());
     }
 
     @Test
     void constructorShouldThrowIfLocationsIsNull() {
-        NullPointerException ex = assertThrows(NullPointerException.class,
-                () -> new SimulationConfig(Collections.emptyList(), Collections.emptyMap(), null, 0.1));
+        NullPointerException ex = assertThrows(NullPointerException.class, () ->
+                new SimulationConfig(Collections.emptyList(), Collections.emptyMap(), null, 0.1)
+        );
         assertEquals("Error loading available locations", ex.getMessage());
     }
 

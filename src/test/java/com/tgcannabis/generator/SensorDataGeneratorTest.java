@@ -11,7 +11,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class SensorDataGeneratorTest {
+class SensorDataGeneratorTest {
     private SensorDataGenerator inRangeGenerator;
     private SensorDataGenerator outOfRangeGenerator;
 
