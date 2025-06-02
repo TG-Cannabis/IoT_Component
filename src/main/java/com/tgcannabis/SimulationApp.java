@@ -26,8 +26,8 @@ public class SimulationApp {
     public SimulationApp() {
         this.publisherConfig = PublisherConfig.loadFromEnv();
         this.simulationConfig = SimulationConfig.loadFromEnv();
-        generator = new SensorDataGenerator(simulationConfig);
-        publisher = new MqttDataPublisher(publisherConfig, generator);
+        this.generator = new SensorDataGenerator(simulationConfig);
+        this.publisher = new MqttDataPublisher(publisherConfig, generator);
     }
 
     public SimulationApp(PublisherConfig publisherConfig, SimulationConfig simulationConfig, SensorDataGenerator generator, MqttDataPublisher publisher) {
@@ -41,7 +41,7 @@ public class SimulationApp {
         try {
             // 1. Load Configuration
             LOGGER.log(Level.INFO, "Publisher configuration loaded: {0}", publisherConfig);
-            LOGGER.log(Level.INFO, "Simulation configuration loaded: {0}", simulationConfig);
+            LOGGER.log(Level.INFO, "Simulation configuration loaded: {0}", simulationConfig.toPrettyString());
 
             // 4. Add Shutdown Hook for graceful termination
             // This ensures disconnection even if the application is stopped externally (Ctrl+C)

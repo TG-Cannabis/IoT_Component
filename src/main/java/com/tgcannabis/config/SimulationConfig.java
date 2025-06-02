@@ -97,4 +97,19 @@ public class SimulationConfig {
                 ", failProbability=" + failProbability +
                 '}';
     }
+
+    /**
+     * Formats the configuration into a readable multiline string.
+     */
+    public String toPrettyString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Sensor Types: ").append(String.join(", ", sensorTypes)).append("\n");
+        sb.append("Value Ranges:\n");
+        for (Map.Entry<String, ValueRange> entry : valueRanges.entrySet()) {
+            sb.append("  - ").append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
+        }
+        sb.append("Locations: ").append(String.join(", ", locations)).append("\n");
+        sb.append("Fail Probability: ").append(failProbability);
+        return sb.toString();
+    }
 }

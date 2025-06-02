@@ -4,7 +4,8 @@ import com.google.gson.Gson;
 import lombok.Getter;
 import com.tgcannabis.iot_component.model.SensorData; // Assuming this model class exists
 import org.eclipse.paho.client.mqttv3.*;
-import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence; // Good default
+import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+
 import com.tgcannabis.config.PublisherConfig;
 import com.tgcannabis.generator.SensorDataGenerator;
 
@@ -46,19 +47,27 @@ public class MqttDataPublisher implements AutoCloseable { // Implement AutoClose
      *
      * @param config        The publisher configuration. Cannot be null.
      * @param dataGenerator The generator for sensor data. Cannot be null.
+     * @throws MqttException
      */
     public MqttDataPublisher(PublisherConfig config, SensorDataGenerator dataGenerator) {
         this.config = Objects.requireNonNull(config, "PublisherConfig cannot be null");
         this.dataGenerator = Objects.requireNonNull(dataGenerator, "SensorDataGenerator cannot be null");
         this.gson = new Gson(); // Gson is thread-safe, can be reused
+        try {
+            mqttClient = new MqttClient(config.getBrokerUrl(), config.getClientId(), new MemoryPersistence());
+        } catch (MqttException e) {
+            LOGGER.log(Level.SEVERE, "Failed connecting to MQTT Broker.", e);
+        }
     }
 
     /**
-     * Constructs an MqttDataPublished with an already existing or mocked mqtt client
+     * Constructs an MqttDataPublished with an already existing or mocked mqtt
+     * client
      *
      * @param config        The publisher configuration. Cannot be null.
      * @param dataGenerator The generator for sensor data. Cannot be null.
-     * @param mqttClient    The instance of mqtt client. Useful for mocking in test environments
+     * @param mqttClient    The instance of mqtt client. Useful for mocking in test
+     *                      environments
      */
     public MqttDataPublisher(PublisherConfig config, SensorDataGenerator dataGenerator, MqttClient mqttClient) {
         this.config = config;
@@ -81,7 +90,7 @@ public class MqttDataPublisher implements AutoCloseable { // Implement AutoClose
             }
 
             LOGGER.log(Level.INFO, "Connecting to MQTT broker: {0} with client ID: {1}",
-                    new Object[]{config.getBrokerUrl(), config.getClientId()});
+                    new Object[] { config.getBrokerUrl(), config.getClientId() });
 
             MqttConnectOptions options = new MqttConnectOptions();
             options.setCleanSession(true); // Standard behavior for publishers like this
@@ -90,6 +99,7 @@ public class MqttDataPublisher implements AutoCloseable { // Implement AutoClose
             options.setKeepAliveInterval(20); // Keep alive interval in seconds
 
             try {
+                System.out.println("HEREEEE");
                 mqttClient.connect(options);
                 LOGGER.info("Successfully connected to MQTT broker.");
             } catch (MqttException e) {
@@ -112,7 +122,8 @@ public class MqttDataPublisher implements AutoCloseable { // Implement AutoClose
 
     /**
      * Starts the process of periodically generating and publishing sensor data.
-     * This method will run indefinitely until stopPublishing() is called or an unrecoverable error occurs.
+     * This method will run indefinitely until stopPublishing() is called or an
+     * unrecoverable error occurs.
      * Make sure connect() has been called successfully before starting.
      *
      * @param interval The interval between publishing messages.
@@ -127,7 +138,7 @@ public class MqttDataPublisher implements AutoCloseable { // Implement AutoClose
         }
 
         running = true;
-        LOGGER.log(Level.INFO, "Starting data publishing every {0} {1}", new Object[]{interval, timeUnit.name()});
+        LOGGER.log(Level.INFO, "Starting data publishing every {0} {1}", new Object[] { interval, timeUnit.name() });
 
         while (running) {
             try {
@@ -143,8 +154,10 @@ public class MqttDataPublisher implements AutoCloseable { // Implement AutoClose
                 // Handle MQTT exceptions during publish (e.g., connection lost temporarily)
                 // Paho's automatic reconnect might handle this, but logging is good.
                 LOGGER.log(Level.SEVERE, "MQTT error during publishing. Attempting to continue.", e);
-                // Optional: Implement a backoff strategy or check connection status more rigorously here.
-                // If automatic reconnect is enabled, it might recover. If not, the loop might fail repeatedly.
+                // Optional: Implement a backoff strategy or check connection status more
+                // rigorously here.
+                // If automatic reconnect is enabled, it might recover. If not, the loop might
+                // fail repeatedly.
                 if (!mqttClient.isConnected()) {
                     LOGGER.severe("MQTT client is disconnected. Stopping publisher.");
                     running = false; // Stop if definitely disconnected
@@ -187,7 +200,7 @@ public class MqttDataPublisher implements AutoCloseable { // Implement AutoClose
 
             // Perform the publish operation
             mqttClient.publish(config.getTopic(), message);
-            LOGGER.log(Level.FINE, "Published data to topic ''{0}'': {1}", new Object[]{config.getTopic(), payload});
+            LOGGER.log(Level.FINE, "Published data to topic ''{0}'': {1}", new Object[] { config.getTopic(), payload });
         }
     }
 
@@ -214,7 +227,8 @@ public class MqttDataPublisher implements AutoCloseable { // Implement AutoClose
                     LOGGER.log(Level.SEVERE, "Error while disconnecting from MQTT broker.", e);
                 }
             }
-            // Close the client to release resources, even if disconnect failed or was not connected
+            // Close the client to release resources, even if disconnect failed or was not
+            // connected
             if (mqttClient != null) {
                 try {
                     mqttClient.close();
@@ -234,7 +248,7 @@ public class MqttDataPublisher implements AutoCloseable { // Implement AutoClose
     @Override
     public void close() {
         stopPublishing(); // Signal the loop to stop if it's running
-        disconnect();     // Disconnect and close the client
+        disconnect(); // Disconnect and close the client
     }
 
     /**
